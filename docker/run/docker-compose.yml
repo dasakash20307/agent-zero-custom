@@ -1,8 +1,14 @@
 services:
   agent-zero:
     container_name: agent-zero
-    image: frdel/agent-zero:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      # This 'args' section passes the BRANCH variable into the build process.
+      args:
+        - BRANCH=main
+    image: my-agent-zero
     volumes:
-      - ./agent-zero:/a0
+      - ../../:/a0
     ports:
       - "50080:80"
