@@ -58,6 +58,16 @@ enabled_plugins:
 #     - '(.*\.)?wikipedia.org$'
 
 engines:
+  - name: radio browser
+   disabled: true
+
+  - name: invidious
+    disabled: false
+    base_url:
+      - https://invidious.snopyta.org
+      - https://invidious.tiekoetter.com
+      - https://invidio.xamh.de
+      - https://inv.riverside.rocks
 
 #   - name: fdroid
 #     disabled: false
@@ -68,11 +78,3 @@ engines:
 #   - name: mediathekviewweb
 #     categories: TV
 #     disabled: false
-#
-#   - name: invidious
-#     disabled: false
-#     base_url:
-#       - https://invidious.snopyta.org
-#       - https://invidious.tiekoetter.com
-#       - https://invidio.xamh.de
-#       - https://inv.riverside.rocks

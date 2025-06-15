@@ -1,14 +1,16 @@
 services:
-  agent-zero:
-    container_name: agent-zero
-    build: 
-      context: .
-      dockerfile: Dockerfile
-      # This 'args' section passes the BRANCH variable into the build process.
-      args:
-        - BRANCH=main
-    image: my-agent-zero
-    volumes:
-      - ../../:/a0
+  agent-zero-run:
+    image: frdel/agent-zero-run:latest
+    container_name: agent-zero-run
+    restart: unless-stopped
     ports:
-      - "50080:80"
+      - "55022:22"
+      - "51789:80"
+    volumes:
+      - ../../:/a0  
+      - C:/Users/Dilasa-AI/Agent-Zero-Root:/root 
+      - C:/Users/Dilasa-AI/Desktop/Agent-Zero-Shared:/shared_data
+    environment:
+      ROOT_PASSWORD: Dilasa1993
+      USER_PASSWORD: 1993
+      TUNNEL_TOKEN: ""
