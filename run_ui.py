@@ -19,8 +19,9 @@ from python.helpers.print_style import PrintStyle
 
 # Set the new timezone to 'UTC'
 os.environ["TZ"] = "UTC"
-# Apply the timezone change
-time.tzset()
+# Apply the timezone change if available (non-Windows)
+if hasattr(time, 'tzset'):
+    time.tzset()
 
 # initialize the internal Flask server
 webapp = Flask("app", static_folder=get_abs_path("./webui"), static_url_path="/")

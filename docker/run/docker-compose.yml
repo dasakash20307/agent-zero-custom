@@ -1,8 +1,16 @@
 services:
-  agent-zero:
-    container_name: agent-zero
-    image: frdel/agent-zero:latest
-    volumes:
-      - ./agent-zero:/a0
+  agent-zero-run:
+    image: frdel/agent-zero-run:latest
+    container_name: agent-zero-run
+    restart: unless-stopped
     ports:
-      - "50080:80"
+      - "55022:22"
+      - "51789:80"
+    volumes:
+      - ../../:/a0  
+      - C:/Users/Dilasa-AI/Agent-Zero-Root:/root 
+      - C:/Users/Dilasa-AI/Desktop/Agent-Zero-Shared:/shared_data
+    environment:
+      ROOT_PASSWORD: Dilasa1993
+      USER_PASSWORD: 1993
+      TUNNEL_TOKEN: ""
