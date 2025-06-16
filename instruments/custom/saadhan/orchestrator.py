@@ -1,19 +1,22 @@
 """
 Orchestrator module for integrating and managing all Saadhan AI Assistant instruments.
 """
+import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
 import json
-import datetime
 import logging
 from dataclasses import dataclass
-import uuid
-from datetime import datetime, timedelta
 
-from .file_management import FileManager
-from .template_management import TemplateManager
-from .project_management import ProjectManager, ProjectDetector
-from .research import ResearchManager
+from .file_management.file_manager import FileManager
+from .template_management.template_manager import TemplateManager
+from .project_management.project_manager import ProjectManager
+from .research.research_manager import ResearchManager
+from .organization_identity.identity_manager import IdentityManager
+from .user_analysis.pattern_analyzer import UserPatternAnalyzer
+from .project_management.project_detector import ProjectDetector
+
 
 @dataclass
 class WorkspaceConfig:
@@ -25,6 +28,7 @@ class WorkspaceConfig:
     project_dir: Optional[Path] = None
     research_dir: Optional[Path] = None
 
+
 @dataclass
 class TaskMetrics:
     """Task evaluation metrics"""
@@ -33,7 +37,8 @@ class TaskMetrics:
     processing_time: int  # Estimated processing time in minutes
     api_calls: int  # Estimated number of API calls
     dependencies: List[str]  # List of dependent task IDs
-    
+
+
 @dataclass
 class TaskDefinition:
     """Task definition structure"""
@@ -49,9 +54,10 @@ class TaskDefinition:
     created_at: str
     updated_at: str
 
+
 class Orchestrator:
     """Manages and coordinates all instruments"""
-    
+
     def __init__(self, config: WorkspaceConfig):
         """
         Initialize orchestrator
@@ -60,19 +66,22 @@ class Orchestrator:
         """
         self.config = config
         self._ensure_directories()
-        
+
         # Setup logging
         self._setup_logging()
-        
+
         # Initialize instruments
-        self.file_manager = FileManager(str(config.base_dir))
+        self.file_manager = FileManager(config.base_dir)
         self.template_manager = TemplateManager(str(config.base_dir))
-        self.project_manager = ProjectManager(str(config.base_dir))
-        self.research_manager = ResearchManager(str(config.base_dir))
-        self.project_detector = ProjectDetector(str(config.base_dir))
-        
+        self.project_manager = ProjectManager(config.base_dir)
+        self.research_manager = ResearchManager(config.base_dir)
+
+        # Initialize organization identity components
+        self.identity_manager = IdentityManager(str(config.base_dir))
+        self.pattern_analyzer = UserPatternAnalyzer(str(config.base_dir))
+
         self.logger.info("Orchestrator initialized successfully")
-    
+
     def _ensure_directories(self):
         """Ensure required directories exist."""
         for directory in [
@@ -85,29 +94,29 @@ class Orchestrator:
         ]:
             if directory:
                 directory.mkdir(parents=True, exist_ok=True)
-    
+
     def _setup_logging(self):
         """Setup logging configuration"""
         self.logger = logging.getLogger("saadhan.orchestrator")
         self.logger.setLevel(logging.INFO)
-        
+
         # Create handlers
         console_handler = logging.StreamHandler()
         file_handler = logging.FileHandler(
             self.config.base_dir / "logs" / "orchestrator.log"
         )
-        
+
         # Create formatters
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
-        
+
         # Add handlers
         self.logger.addHandler(console_handler)
         self.logger.addHandler(file_handler)
-    
+
     def initialize_workspace(self) -> bool:
         """
         Initialize workspace structure
@@ -128,23 +137,23 @@ class Orchestrator:
                 'established': '1994',
                 'location': 'Maharashtra, India'
             }
-            
+
             profile_path = self.config.base_dir / "knowledge" / "organization" / "profile.json"
             profile_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(profile_path, 'w', encoding='utf-8') as f:
                 json.dump(org_profile, f, indent=2)
-            
+
             self.logger.info("Workspace initialized successfully")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to initialize workspace: {str(e)}")
             return False
-    
+
     def create_project(self, title: str, description: str,
-                      start_date: str, end_date: str,
-                      objectives: List[str], methodology: str) -> Dict[str, Any]:
+                       start_date: str, end_date: str,
+                       objectives: List[str], methodology: str) -> Dict[str, Any]:
         """
         Create a new project with associated research
         Args:
@@ -165,7 +174,7 @@ class Orchestrator:
                 start_date=start_date,
                 end_date=end_date
             )
-            
+
             # Create associated research
             research = self.research_manager.create_research(
                 title=f"Research: {title}",
@@ -173,32 +182,132 @@ class Orchestrator:
                 objectives=objectives,
                 methodology=methodology
             )
-            
+
             # Link project and research
             self.project_manager.update_project(
                 project.id,
                 {'metadata': {'research_id': research.id}}
             )
-            
+
             self.research_manager.update_research(
                 research.id,
                 {'metadata': {'project_id': project.id}}
             )
-            
+
             self.logger.info(
                 f"Created project '{title}' with ID {project.id} "
                 f"and research ID {research.id}"
             )
-            
+
             return {
                 'project_id': project.id,
                 'research_id': research.id
             }
-            
+
         except Exception as e:
             self.logger.error(f"Failed to create project: {str(e)}")
-            raise
+            return {'error': str(e)}
+
+    def process_interaction(self, user_id: str, content: str,
+                            interaction_type: str = "general") -> None:
+        """
+        Process and analyze user interaction
+        
+        Args:
+            user_id: User ID
+            content: Interaction content
+            interaction_type: Type of interaction (e.g., 'general',
+                              'project', 'research')
+        """
+        try:
+            # Analyze interaction pattern
+            self.pattern_analyzer.analyze_task(
+                user_id=user_id,
+                task_type=interaction_type,
+                task_content=content
+            )
+            
+            # Update identity context if employee
+            if self.identity_manager.is_employee(user_id):
+                self.identity_manager.update_user_interaction(
+                    user_id, interaction_type, content
+                )
+            
+            self.logger.info(
+                f"Processed interaction for user {user_id} "
+                f"of type {interaction_type}"
+            )
+            
+        except Exception as e:
+            self.logger.error(
+                f"Failed to process interaction for user {user_id}: {str(e)}"
+            )
+            self.handle_errors(e)
+
+    def get_intelligent_suggestions(self, user_id: str) -> Dict[str, Any]:
+        """
+        Get intelligent suggestions based on user patterns
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Dictionary containing suggestions and preferences
+        """
+        try:
+            # Get task suggestions
+            task_suggestions = self.pattern_analyzer.suggest_tasks(user_id)
+            
+            # Get user preferences
+            preferences = self.pattern_analyzer.get_user_preferences(user_id)
+            
+            # Get identity context if employee
+            identity_context = {}
+            if self.identity_manager.is_employee(user_id):
+                employee_profile = self.identity_manager.get_employee_context(user_id)
+                if employee_profile:
+                    identity_context = employee_profile.__dict__
+            
+            current_time = datetime.now()
+            
+            # Combine all insights
+            return {
+                'task_suggestions': task_suggestions,
+                'user_preferences': preferences,
+                'identity_context': identity_context,
+                'timestamp': current_time.isoformat()
+            }
+            
+        except Exception as e:
+            current_time = datetime.now()
+            self.logger.error(
+                f"Failed to get suggestions for user {user_id}: {str(e)}"
+            )
+            return {
+                'error': str(e),
+                'timestamp': current_time.isoformat()
+            }
     
+    def update_user_privacy(self, user_id: str, settings: Dict[str, bool]) -> None:
+        """
+        Update user privacy settings
+        
+        Args:
+            user_id: User ID
+            settings: Dictionary of privacy settings
+        """
+        try:
+            # Update privacy settings
+            self.pattern_analyzer.update_privacy_settings(user_id, settings)
+            
+            self.logger.info(f"Updated privacy settings for user {user_id}")
+            
+        except Exception as e:
+            self.logger.error(
+                f"Failed to update privacy settings for user {user_id}: {str(e)}"
+            )
+            self.handle_errors(e)
+
     def generate_report(self, project_id: str) -> Dict[str, Any]:
         """
         Generate comprehensive project report
@@ -228,7 +337,7 @@ class Orchestrator:
             report = {
                 'project': project_data,
                 'research': research_data,
-                'generated_at': datetime.datetime.now().isoformat()
+                'generated_at': datetime.now().isoformat()
             }
             
             self.logger.info(f"Generated report for project {project_id}")
@@ -247,7 +356,7 @@ class Orchestrator:
             Dictionary containing error details
         """
         error_id = str(hash(str(error)))
-        timestamp = datetime.datetime.now().isoformat()
+        timestamp = datetime.now().isoformat()
         
         error_data = {
             'error_id': error_id,
@@ -271,15 +380,64 @@ class Orchestrator:
         
         return error_data
 
+    def get_greeting(self, employee_id: Optional[str] = None) -> str:
+        """
+        Get appropriate greeting
+        Args:
+            employee_id: Employee ID (optional)
+        Returns:
+            Greeting string
+        """
+        if employee_id:
+            return self.identity_manager.get_greeting(employee_id)
+        return "Greetings Superior"
+
+    def add_employee(self, name: str, designation: str, department: str) -> Dict[str, Any]:
+        """
+        Add a new employee to the system
+        Args:
+            name: Employee name
+            designation: Employee's designation
+            department: Employee's department
+        Returns:
+            Dictionary containing employee ID
+        """
+        try:
+            employee = self.identity_manager.add_employee(name, designation, department)
+            self.logger.info(f"Added employee {name} with ID {employee.id}")
+            return {'employee_id': employee.id}
+        except Exception as e:
+            self.logger.error(f"Failed to add employee: {str(e)}")
+            return {'error': str(e)}
+
+    def add_user(self, name: str) -> Dict[str, Any]:
+        """
+        Add a new user to the system
+        Args:
+            name: User's name
+        Returns:
+            Dictionary containing user ID
+        """
+        try:
+            user = self.identity_manager.add_user(name)
+            self.logger.info(f"Added user {name} with ID {user.id}")
+            return {'user_id': user.id}
+        except Exception as e:
+            self.logger.error(f"Failed to add user: {str(e)}")
+            return {'error': str(e)}
+
+
 class TaskOrchestrator:
-    """Handles task orchestration and delegation"""
+    """
+    Handles task orchestration and delegation
+    """
     
     def __init__(self, workspace_root: Union[str, Path]):
         self.workspace_root = Path(workspace_root)
-        self.file_manager = FileManager(str(workspace_root))
-        self.project_manager = ProjectManager(workspace_root)
-        self.project_detector = ProjectDetector(str(workspace_root))
-        self.template_manager = TemplateManager(str(workspace_root))
+        self.file_manager = FileManager(self.workspace_root)
+        self.project_manager = ProjectManager(self.workspace_root)
+        self.project_detector = ProjectDetector(str(self.workspace_root))
+        self.template_manager = TemplateManager(str(self.workspace_root))
         
         # Initialize task storage
         self.tasks: Dict[str, TaskDefinition] = {}
@@ -314,7 +472,7 @@ class TaskOrchestrator:
             api_calls=api_calls,
             dependencies=[]
         )
-    
+
     def create_task(self, title: str, description: str, objectives: List[str],
                     deadline: str, priority: int = 3) -> TaskDefinition:
         """
@@ -322,21 +480,21 @@ class TaskOrchestrator:
         Args:
             title: Task title
             description: Task description
-            objectives: List of objectives
-            deadline: Deadline in ISO format
-            priority: Priority level (1-5)
+            objectives: List of task objectives
+            deadline: Task deadline (ISO format datetime)
+            priority: Task priority
         Returns:
-            Created TaskDefinition
+            Created TaskDefinition object
         """
-        # Evaluate task requirements
-        metrics = self.evaluate_task(description, objectives)
+        task_id = str(uuid.uuid4())
+        created_at = datetime.now().isoformat()
+        updated_at = datetime.now().isoformat()
         
-        # Determine complexity based on metrics
+        metrics = self.evaluate_task(description, objectives)
         complexity = self._determine_complexity(metrics)
         
-        # Create task
         task = TaskDefinition(
-            id=str(uuid.uuid4()),
+            id=task_id,
             title=title,
             description=description,
             complexity=complexity,
@@ -345,30 +503,32 @@ class TaskOrchestrator:
             metrics=metrics,
             status='pending',
             parent_id=None,
-            created_at=datetime.now().isoformat(),
-            updated_at=datetime.now().isoformat()
+            created_at=created_at,
+            updated_at=updated_at
         )
-        
-        # Store task
-        self.tasks[task.id] = task
-        
+        self.tasks[task_id] = task
         return task
     
     def create_subtask(self, parent_id: str, title: str, description: str,
-                      objectives: List[str], deadline: str) -> TaskDefinition:
-        """Create a subtask under a parent task"""
-        parent_task = self.tasks.get(parent_id)
+                       objectives: List[str], deadline: str) -> TaskDefinition:
+        """
+        Create a subtask for an existing task
+        Args:
+            parent_id: ID of the parent task
+            title: Subtask title
+            description: Subtask description
+            objectives: List of subtask objectives
+            deadline: Subtask deadline (ISO format datetime)
+        Returns:
+            Created TaskDefinition object
+        """
+        parent_task = self.get_task(parent_id)
         if not parent_task:
-            raise ValueError(f"Parent task not found: {parent_id}")
+            raise ValueError(f"Parent task {parent_id} not found")
         
-        # Create subtask with parent reference
         subtask = self.create_task(title, description, objectives, deadline)
         subtask.parent_id = parent_id
         
-        # Update task
-        self.tasks[subtask.id] = subtask
-        
-        # Update dependencies
         if parent_id not in self.task_dependencies:
             self.task_dependencies[parent_id] = []
         self.task_dependencies[parent_id].append(subtask.id)
@@ -376,65 +536,86 @@ class TaskOrchestrator:
         return subtask
     
     def get_task(self, task_id: str) -> Optional[TaskDefinition]:
-        """Get task by ID"""
+        """
+        Get a task by ID
+        Args:
+            task_id: Task ID
+        Returns:
+            TaskDefinition object if found, None otherwise
+        """
         return self.tasks.get(task_id)
     
     def list_tasks(self, status: Optional[str] = None) -> List[TaskDefinition]:
-        """List all tasks, optionally filtered by status"""
-        tasks = list(self.tasks.values())
+        """
+        List all tasks, optionally filtered by status
+        Args:
+            status: Optional status filter
+        Returns:
+            List of TaskDefinition objects
+        """
         if status:
-            tasks = [t for t in tasks if t.status == status]
-        return tasks
+            return [task for task in self.tasks.values() if task.status == status]
+        return list(self.tasks.values())
     
     def update_task_status(self, task_id: str, status: str) -> TaskDefinition:
-        """Update task status"""
-        task = self.tasks.get(task_id)
+        """
+        Update task status
+        Args:
+            task_id: Task ID
+            status: New status
+        Returns:
+            Updated TaskDefinition object
+        Raises:
+            ValueError: If task not found
+        """
+        task = self.get_task(task_id)
         if not task:
-            raise ValueError(f"Task not found: {task_id}")
-        
+            raise ValueError(f"Task {task_id} not found")
         task.status = status
         task.updated_at = datetime.now().isoformat()
-        
         return task
     
     def get_dependent_tasks(self, task_id: str) -> List[TaskDefinition]:
-        """Get list of tasks that depend on the given task"""
+        """
+        Get tasks that depend on the given task
+        Args:
+            task_id: Task ID
+        Returns:
+            List of TaskDefinition objects
+        """
         dependent_ids = self.task_dependencies.get(task_id, [])
-        return [self.tasks[tid] for tid in dependent_ids if tid in self.tasks]
-    
+        return [self.tasks[dep_id] for dep_id in dependent_ids if dep_id in self.tasks]
+
     def get_task_chain(self, task_id: str) -> List[TaskDefinition]:
-        """Get chain of tasks from root to the given task"""
-        task = self.tasks.get(task_id)
-        if not task:
-            return []
-        
-        chain = [task]
-        while task.parent_id:
-            parent = self.tasks.get(task.parent_id)
-            if parent:
-                chain.insert(0, parent)
-                task = parent
+        """
+        Get the entire chain of parent tasks for a given task
+        Args:
+            task_id: Task ID
+        Returns:
+            List of TaskDefinition objects in the chain
+            (from oldest parent to current)
+        """
+        chain = []
+        current_task = self.get_task(task_id)
+        while current_task:
+            chain.insert(0, current_task)  # Add to the beginning to maintain order
+            if current_task.parent_id:
+                current_task = self.get_task(current_task.parent_id)
             else:
                 break
-        
         return chain
-    
+
     def _determine_complexity(self, metrics: TaskMetrics) -> str:
-        """Determine task complexity based on metrics"""
-        # Score different aspects
-        context_score = 1 if metrics.context_size <= 2 else 2 if metrics.context_size <= 5 else 3
-        memory_score = 1 if metrics.memory_usage <= 200 else 2 if metrics.memory_usage <= 500 else 3
-        time_score = 1 if metrics.processing_time <= 15 else 2 if metrics.processing_time <= 30 else 3
-        api_score = 1 if metrics.api_calls <= 5 else 2 if metrics.api_calls <= 10 else 3
-        dependency_score = 1 if len(metrics.dependencies) <= 2 else 2 if len(metrics.dependencies) <= 5 else 3
-        
-        # Calculate average score
-        avg_score = (context_score + memory_score + time_score + api_score + dependency_score) / 5
-        
-        # Map to complexity levels
-        if avg_score <= 1.5:
-            return 'low'
-        elif avg_score <= 2.5:
+        """
+        Determine task complexity based on metrics
+        Args:
+            metrics: TaskMetrics object
+        Returns:
+            str: Complexity level ('low', 'medium', 'high')
+        """
+        if metrics.context_size > 10 or metrics.memory_usage > 1000 or metrics.processing_time > 60:
+            return 'high'
+        elif metrics.context_size > 5 or metrics.memory_usage > 500 or metrics.processing_time > 30:
             return 'medium'
         else:
-            return 'high' 
+            return 'low'

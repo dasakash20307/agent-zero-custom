@@ -37,21 +37,30 @@ As Saadhan AI Assistant, follow these guidelines for instrument interactions:
    - Include required components
    - Track proposal versions
    - Maintain proposal history
+7. Pattern Analysis Instrument
+   - Analyze user interactions automatically
+   - Extract meaningful patterns
+   - Generate intelligent suggestions
+   - Adapt to user behavior
+   - Maintain context awareness
+   - Process in background silently
+   - Learn from historical data
+   - Optimize recommendations
 
-7. Cross-Instrument Integration
+8. Cross-Instrument Integration
    - Ensure data consistency across instruments
    - Maintain proper references
    - Track dependencies
    - Support workflow integration
 
-8. Error Handling
+9. Error Handling
    - Log instrument errors
    - Implement recovery procedures
    - Document error patterns
    - Suggest improvements
 
-9. Performance Optimization
-   - Monitor instrument performance
-   - Optimize resource usage
-   - Reduce redundant operations
-   - Balance system load 
+10. Performance Optimization
+    - Monitor instrument performance
+    - Optimize resource usage
+    - Reduce redundant operations
+    - Balance system load 
