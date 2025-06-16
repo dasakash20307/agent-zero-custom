@@ -1,7 +1,20 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod # Modified this line
 from dataclasses import dataclass
+from typing import Any, Dict, TYPE_CHECKING # Added for BaseTool
 
-from agent import Agent
+# Use TYPE_CHECKING for Agent import to avoid circular dependencies if agent.py imports from this module
+if TYPE_CHECKING:
+    from agent import Agent
+    # If agent.py is in root, and this is python/helpers/tool.py, relative import:
+    # from ...agent import Agent
+else:
+    # For runtime, if direct import works or if Agent is mostly for type hints in BaseTool constructor
+    # This might need adjustment based on actual project structure and runtime behavior.
+    # Using a forward reference / string literal 'Agent' in __init__ is safer.
+    pass
+
+
+from agent import Agent # This existing import might be for the old Tool class. Let's keep it for now.
 from python.helpers.print_style import PrintStyle
 from python.helpers.strings import sanitize_string
 
@@ -52,3 +65,47 @@ class Tool:
         words = [words[0].capitalize()] + [word.lower() for word in words[1:]]
         result = ' '.join(words)
         return result
+
+
+class BaseTool(ABC):
+    def __init__(self, agent: 'Agent'): # Use string literal 'Agent' for type hint
+        self.agent = agent
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """The unique name of the tool."""
+        pass
+
+    @property
+    @abstractmethod
+    def description(self) -> str:
+        """A detailed description of what the tool does, its purpose, and when to use it."""
+        pass
+
+    @property
+    @abstractmethod
+    def schema(self) -> Dict[str, Any]:
+        """JSON schema for the tool's input parameters.
+        Should follow the JSON Schema specification.
+        Example:
+        {
+            "type": "object",
+            "properties": {
+                "param1": {"type": "string", "description": "Description of param1."},
+                "param2": {"type": "integer", "description": "Description of param2."}
+            },
+            "required": ["param1"]
+        }
+        """
+        pass
+
+    @abstractmethod
+    async def execute(self, **kwargs: Any) -> str:
+        """Executes the tool with the given arguments.
+        Args:
+            **kwargs: The arguments for the tool, matching the defined schema.
+        Returns:
+            A string representing the result of the tool execution.
+        """
+        pass

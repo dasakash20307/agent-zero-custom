@@ -1,51 +1,70 @@
 from fnmatch import fnmatch
 import json
-import os, re
+import os
+import re # re was imported twice
 import base64
-
-import re
+import jinja2
 import shutil
 import tempfile
 import zipfile
 
 from python.helpers.strings import sanitize_string
 
+_jinja_env = None
+def get_jinja_env():
+    global _jinja_env
+    if _jinja_env is None:
+        _jinja_env = jinja2.Environment(
+            loader=jinja2.BaseLoader(), # BaseLoader as templates are strings
+            undefined=jinja2.StrictUndefined,
+            autoescape=False # Prompts are often not HTML
+        )
+    return _jinja_env
 
-def parse_file(_relative_path, _backup_dirs=None, _encoding="utf-8", **kwargs):
-    content = read_file(_relative_path, _backup_dirs, _encoding)
-    is_json = is_full_json_template(content)
-    content = remove_code_fences(content)
-    if is_json:
-        content = replace_placeholders_json(content, **kwargs)
-        obj = json.loads(content)
-        # obj = replace_placeholders_dict(obj, **kwargs)
-        return obj
-    else:
-        content = replace_placeholders_text(content, **kwargs)
-        return content
+def _read_raw_file_content(path: str, encoding: str = "utf-8") -> str:
+    with open(path, "r", encoding=encoding) as f:
+        return f.read()
 
+def parse_file(_relative_path: str, _backup_dirs: list[str] | None = None, _encoding: str = "utf-8", **kwargs) -> Any: # Original type was Any
+    if _backup_dirs is None: _backup_dirs = []
 
-def read_file(_relative_path, _backup_dirs=None, _encoding="utf-8", **kwargs):
-    if _backup_dirs is None:
-        _backup_dirs = []
-
-    # Try to get the absolute path for the file from the original directory or backup directories
     absolute_path = find_file_in_dirs(_relative_path, _backup_dirs)
+    # Read raw content once for is_full_json_template check and for processing
+    raw_content = _read_raw_file_content(absolute_path, _encoding)
 
-    # Read the file content
-    with open(absolute_path, "r", encoding=_encoding) as f:
-        # content = remove_code_fences(f.read())
-        content = f.read()
+    content_with_includes = process_includes(raw_content, os.path.dirname(absolute_path), _backup_dirs, _encoding, **kwargs)
 
-    # Replace placeholders with values from kwargs
-    content = replace_placeholders_text(content, **kwargs)
+    rendered_content_str = replace_placeholders_text(content_with_includes, **kwargs) # Jinja rendering
 
-    # Process include statements
-    content = process_includes(
-        content, os.path.dirname(_relative_path), _backup_dirs, **kwargs
-    )
+    # Check if the *original* template structure (raw_content) indicated it's JSON
+    # is_full_json_template checks for ```json ... ``` fences.
+    if is_full_json_template(raw_content):
+        content_to_load = remove_code_fences(rendered_content_str) # remove fences from the rendered string
+        try:
+            obj = json.loads(content_to_load)
+            return obj
+        except json.JSONDecodeError as e:
+            # Provide more context in case of error
+            error_msg = (
+                f"Failed to parse rendered content as JSON from '{_relative_path}'. "
+                f"Error: {e}. Rendered content (first 200 chars): '{content_to_load[:200]}...'"
+            )
+            raise ValueError(error_msg) from e
+    else:
+        # It's a plain text template, remove fences from the rendered string
+        return remove_code_fences(rendered_content_str)
 
-    return content
+
+def read_file(_relative_path: str, _backup_dirs: list[str] | None = None, _encoding: str = "utf-8", **kwargs) -> str:
+    if _backup_dirs is None: _backup_dirs = []
+
+    absolute_path = find_file_in_dirs(_relative_path, _backup_dirs)
+    raw_content = _read_raw_file_content(absolute_path, _encoding)
+
+    content_with_includes = process_includes(raw_content, os.path.dirname(absolute_path), _backup_dirs, _encoding, **kwargs)
+
+    final_content = replace_placeholders_text(content_with_includes, **kwargs) # Jinja rendering
+    return final_content
 
 
 def read_file_bin(_relative_path, _backup_dirs=None):
@@ -74,70 +93,88 @@ def read_file_base64(_relative_path, _backup_dirs=None):
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def replace_placeholders_text(_content: str, **kwargs):
-    # Replace placeholders with values from kwargs
-    for key, value in kwargs.items():
-        placeholder = "{{" + key + "}}"
-        strval = str(value)
-        _content = _content.replace(placeholder, strval)
-    return _content
+def replace_placeholders_text(_content: str, **kwargs) -> str:
+    if not kwargs: # If no kwargs, no templating needed
+        return _content
+    env = get_jinja_env()
+    try:
+        template = env.from_string(_content)
+        return template.render(**kwargs)
+    except jinja2.exceptions.TemplateSyntaxError as e:
+        raise ValueError(f"Jinja2 template syntax error: {e}") from e
+    except jinja2.exceptions.UndefinedError as e:
+        raise ValueError(f"Jinja2 undefined variable: {e}") from e
 
 
-def replace_placeholders_json(_content: str, **kwargs):
-    # Replace placeholders with values from kwargs
-    for key, value in kwargs.items():
-        placeholder = "{{" + key + "}}"
-        strval = json.dumps(value)
-        _content = _content.replace(placeholder, strval)
-    return _content
+# def replace_placeholders_json(_content: str, **kwargs):
+#     # Superseded by Jinja2 rendering in replace_placeholders_text
+#     # Ensure the output of Jinja is a valid JSON string if used for JSON
+#     if not kwargs:
+#         return _content
+#     env = get_jinja_env()
+#     template = env.from_string(_content)
+#     return template.render(**kwargs)
 
 
-def replace_placeholders_dict(_content: dict, **kwargs):
-    def replace_value(value):
-        if isinstance(value, str):
-            placeholders = re.findall(r"{{(\w+)}}", value)
-            if placeholders:
-                for placeholder in placeholders:
-                    if placeholder in kwargs:
-                        replacement = kwargs[placeholder]
-                        if value == f"{{{{{placeholder}}}}}":
-                            return replacement
-                        elif isinstance(replacement, (dict, list)):
-                            value = value.replace(
-                                f"{{{{{placeholder}}}}}", json.dumps(replacement)
-                            )
-                        else:
-                            value = value.replace(
-                                f"{{{{{placeholder}}}}}", str(replacement)
-                            )
-            return value
-        elif isinstance(value, dict):
-            return {k: replace_value(v) for k, v in value.items()}
-        elif isinstance(value, list):
-            return [replace_value(item) for item in value]
-        else:
-            return value
-
-    return replace_value(_content)
+# def replace_placeholders_dict(_content: dict, **kwargs):
+#     # Superseded by Jinja2 rendering before JSON parsing.
+#     return _content
 
 
-def process_includes(_content, _base_path, _backup_dirs, **kwargs):
-    # Regex to find {{ include 'path' }} or {{include'path'}}
-    include_pattern = re.compile(r"{{\s*include\s*['\"](.*?)['\"]\s*}}")
+def process_includes(_content: str, _base_dir_for_includes: str, _backup_dirs: list[str], _encoding: str = "utf-8", **kwargs_for_include_path_rendering) -> str:
+    include_pattern = re.compile(r"{{\s*include\s*['"](.*?)['"]\s*}}")
+
+    processed_paths_stack = kwargs_for_include_path_rendering.get('_processed_paths_stack', [])
 
     def replace_include(match):
-        include_path = match.group(1)
-        # First attempt to resolve the include relative to the base path
-        full_include_path = find_file_in_dirs(
-            os.path.join(_base_path, include_path), _backup_dirs
-        )
+        include_path_template = match.group(1)
+        rendered_include_path = include_path_template # Keep it simple: path is literal
 
-        # Recursively read the included file content, keeping the original base path
-        included_content = read_file(full_include_path, _backup_dirs, **kwargs)
-        return included_content
+        # Try path relative to the current file's directory first
+        # Note: os.path.join might behave unexpectedly if rendered_include_path is absolute.
+        # Assuming rendered_include_path is always relative for this logic.
+        current_file_try_path = os.path.normpath(os.path.join(_base_dir_for_includes, rendered_include_path))
 
-    # Replace all includes with the file content
-    return re.sub(include_pattern, replace_include, _content)
+        # Check for recursion
+        # Using normpath to ensure consistent path representation (e.g. /a/b vs /a/./b)
+        normalized_attempt_path = os.path.normpath(current_file_try_path)
+        if os.path.isfile(normalized_attempt_path): # only add to stack if it's a valid file we are about to read
+            if normalized_attempt_path in processed_paths_stack:
+                raise RecursionError(f"Circular include detected for path: {normalized_attempt_path}. Stack: {' -> '.join(processed_paths_stack)}")
+
+
+        try:
+            if os.path.isfile(current_file_try_path):
+                found_abs_path = current_file_try_path
+            else:
+                found_abs_path = find_file_in_dirs(rendered_include_path, _backup_dirs)
+
+            included_raw_content = _read_raw_file_content(found_abs_path, _encoding)
+
+            # Add current path to stack for the recursive call
+            new_stack = processed_paths_stack + [os.path.normpath(found_abs_path)]
+            return process_includes(included_raw_content, os.path.dirname(found_abs_path), _backup_dirs, _encoding, **{**kwargs_for_include_path_rendering, '_processed_paths_stack': new_stack})
+
+        except FileNotFoundError:
+            return f"Error: Included file '{rendered_include_path}' not found. Looked near '{_base_dir_for_includes}' and in backups: '{_backup_dirs}'."
+        except RecursionError as e_rec:
+            raise e_rec # Propagate recursion error
+
+    # Iteratively replace includes to handle nested cases (simple approach)
+    # A more robust solution would parse the template structure.
+    final_content = _content
+    for _ in range(10): # Limit iterations to prevent runaway loops
+        new_content = include_pattern.sub(replace_include, final_content)
+        if new_content == final_content:
+            break
+        final_content = new_content
+    else: # If loop finished due to iterations limit
+        if include_pattern.search(final_content):
+            # Log or raise an error if includes are still present after max iterations
+            # This indicates a complex case not handled, or an error string was injected.
+            print(f"Warning: Max include iterations reached or unresolvable include in content starting with: {final_content[:100]}")
+
+    return final_content
 
 
 def find_file_in_dirs(file_path, backup_dirs):
