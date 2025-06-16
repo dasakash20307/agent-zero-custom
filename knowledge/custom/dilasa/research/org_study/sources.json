@@ -1,0 +1,36 @@
+{
+  "sources": [
+    {
+      "id": "s001",
+      "title": "Dilasa NGO Official Website",
+      "url": "https://www.dilasango.org/",
+      "type": "website",
+      "description": "Official website containing organization overview, programs, and impact",
+      "added_at": "2024-03-21T10:20:00Z"
+    },
+    {
+      "id": "s002",
+      "title": "Dilasa Organization Profile",
+      "url": "knowledge/custom/dilasa/organization/profile.md",
+      "type": "internal_document",
+      "description": "Internal organizational profile document with detailed information",
+      "added_at": "2024-03-21T10:25:00Z"
+    },
+    {
+      "id": "s003",
+      "title": "Dilasa Domains Documentation",
+      "url": "knowledge/custom/dilasa/organization/domains.md",
+      "type": "internal_document",
+      "description": "Documentation of organization's operational domains and focus areas",
+      "added_at": "2024-03-21T10:30:00Z"
+    },
+    {
+      "id": "s004",
+      "title": "Watershed Development Programs",
+      "url": "http://www.dilasango.org/program-Watershed-Development.aspx",
+      "type": "website",
+      "description": "Detailed information about watershed development initiatives",
+      "added_at": "2024-03-21T10:35:00Z"
+    }
+  ]
+} 

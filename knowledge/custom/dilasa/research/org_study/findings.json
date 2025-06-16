@@ -1,0 +1,74 @@
+{
+  "findings": [
+    {
+      "id": "f001",
+      "title": "Organizational Overview",
+      "description": "Dilasa Janvikas Pratishthan is a Civil Society organization established in 1994, focusing on sustainable rural development programs.",
+      "evidence": "Source: Official website (dilasango.org)",
+      "key_points": [
+        "Founded in 1994",
+        "Works in close cooperation with 25 smaller NGOs in Vidharbha and Marathwada regions",
+        "Operates in 84+ districts across 11 states",
+        "Impacted 2.6+ million beneficiaries across 8470+ villages"
+      ],
+      "added_at": "2024-03-21T10:05:00Z"
+    },
+    {
+      "id": "f002",
+      "title": "Core Focus Areas",
+      "description": "The organization focuses on multiple development sectors with emphasis on natural resource management and sustainable agriculture.",
+      "evidence": "Based on organizational profile and website content",
+      "key_points": [
+        "Natural resource management",
+        "Climate resilient agriculture",
+        "Model village development",
+        "Health and education initiatives",
+        "Livelihood enhancement",
+        "Women empowerment"
+      ],
+      "added_at": "2024-03-21T10:10:00Z"
+    },
+    {
+      "id": "f003",
+      "title": "Major Achievements",
+      "description": "The organization has achieved significant impact across various programs and initiatives.",
+      "evidence": "Source: Organization achievements page",
+      "key_points": [
+        "Treated over 7.82 lakh ha of land under watershed programs",
+        "Working with 4000 SHG's & over 40000 members",
+        "Created irrigation facility in more than 4500 acres through 102 Phad projects",
+        "Implemented standard package of practices involving 3000 farmers",
+        "Developed more than 750 nutritional Kitchen Gardens in 19 villages"
+      ],
+      "added_at": "2024-03-21T10:15:00Z"
+    },
+    {
+      "id": "f004",
+      "title": "Recent Projects and Partnerships",
+      "description": "Recent collaborations and initiatives show continued growth and impact in 2023-2024",
+      "evidence": "Source: Recent news articles and project reports",
+      "key_points": [
+        "Collaboration with ACC and Adani Foundation for cement nala bund construction in Gowari village",
+        "Implementation of watershed development projects in partnership with NABARD",
+        "CSR project implementation with DHFL in Phulambri block of Aurangabad",
+        "Climate proofing programme in Sonari village",
+        "Partnership with MCX for watershed development in Ghotka village"
+      ],
+      "added_at": "2024-03-21T10:40:00Z"
+    },
+    {
+      "id": "f005",
+      "title": "Watershed Development Programs",
+      "description": "Comprehensive watershed development initiatives across multiple regions",
+      "evidence": "Source: Organization's watershed development documentation",
+      "key_points": [
+        "Implementation of WDF projects in Jalkotwadi, Aliyabad and Manmodi watersheds",
+        "Coverage of 3318 ha area under watershed treatments",
+        "RSO role in assessing watershed projects in Ahmednagar & Nanded districts",
+        "Implementation of UPNRM project in Jalna district",
+        "Village Transformation Programme in 5 villages of Phulambri block"
+      ],
+      "added_at": "2024-03-21T10:45:00Z"
+    }
+  ]
+} 
