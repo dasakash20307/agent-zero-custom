@@ -1,0 +1,6 @@
+pandas==1.5.3
+matplotlib==3.7.1
+python-docx==0.8.11
+reportlab==4.0.4
+PyPDF2==3.0.1
+typing-extensions==4.5.0  # For better type hints support 

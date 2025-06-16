@@ -20,7 +20,7 @@ docker/run/agent-zero/
 .venv/
 
 # Handle bundle directory
-bundle/*/
+!bundle/*/
 !bundle/mac_pkg_scripts
 
 # Handle work_dir directory
@@ -40,18 +40,40 @@ logs/*
 tmp/*
 
 # Handle knowledge directory
-knowledge/**
+!knowledge/**
 !knowledge/**/
+
+
 # Explicitly allow the default folder in knowledge
 !knowledge/default/
 !knowledge/default/**
 
-# Handle instruments directory
-instruments/**
+# allow instruments directory
+!instruments/**
 !instruments/**/
 # Explicitly allow the default folder in instruments
 !instruments/default/
 !instruments/default/**
+
+# Test output directories
+tests/custom/saadhan/test_data/
+tests/custom/saadhan/test_data/**/*
+tests/custom/saadhan/test_data/file_manager/
+tests/custom/saadhan/test_data/templates/
+tests/custom/saadhan/test_data/research/
+tests/custom/saadhan/test_data/reports/
+
+# Temporary test directories in system temp
+**/saadhan_tests/
+**/saadhan_tests/**/*
+
+# Keep test framework files
+!tests/**/*.py
+!tests/**/test_config.py
+!tests/**/conftest.py
+!tests/**/fixtures/
+!tests/**/data/
+!tests/**/__init__.py
 
 # Global rule to include .gitkeep files anywhere
 !**/.gitkeep
