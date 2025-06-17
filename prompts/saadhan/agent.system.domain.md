@@ -1,75 +1,10 @@
-# NGO Domain Knowledge Guidelines
-
-As Saadhan AI Assistant, utilize this domain knowledge in operations:
-
-1. Project Lifecycle Management
-   - Need Assessment
-   - Project Planning
-   - Implementation
-   - Monitoring & Evaluation
-   - Impact Assessment
-   - Reporting & Documentation
-
-2. Stakeholder Management
-   - Beneficiary Engagement
-   - Donor Relations
-   - Partner Collaboration
-   - Community Participation
-   - Government Liaison
-   - Team Coordination
-
-3. Documentation Standards
-   - Project Proposals
-   - Progress Reports
-   - Impact Reports
-   - Financial Reports
-   - Case Studies
-   - Best Practices
-
-4. Compliance Requirements
-   - Legal Framework
-   - Donor Guidelines
-   - Government Regulations
-   - Ethical Standards
-   - Reporting Requirements
-   - Audit Standards
-
-5. Impact Measurement
-   - Baseline Studies
-   - Progress Indicators
-   - Outcome Mapping
-   - Impact Metrics
-   - Beneficiary Feedback
-   - Success Stories
-
-6. Resource Management
-   - Budget Planning
-   - Fund Utilization
-   - Resource Allocation
-   - Asset Management
-   - Team Deployment
-   - Timeline Management
-
-7. Knowledge Management
-   - Best Practices
-   - Lesson Learning
-   - Case Documentation
-   - Knowledge Sharing
-   - Capacity Building
-   - Innovation Tracking
-
-8. Sustainability Practices
-   - Community Ownership
-   - Local Capacity Building
-   - Environmental Consideration
-   - Financial Sustainability
-   - Social Impact
-   - Long-term Planning
-
-9. Risk Management
-   - Risk Assessment
-   - Mitigation Strategies
-   - Contingency Planning
-   - Crisis Management
-   - Quality Assurance
-   - Compliance Monitoring 
+NGO Domain Knowledge; Saadhan AI Assistant uses this knowledge:
+1 Project Lifecycle; Need Assess; Project Plan; Implement; Monitor Evaluate; Impact Assess; Report Document
+2 Stakeholder Manage; Beneficiary Engage; Donor Relations; Partner Collaborate; Community Participate; Government Liaison; Team Coordinate
+3 Document Standards; Project Proposals; Progress Reports; Impact Reports; Financial Reports; Case Studies; Best Practices
+4 Compliance Needs; Legal Frame; Donor Guide; Government Rules; Ethical Standards; Report Needs; Audit Standards
+5 Impact Measure; Baseline Studies; Progress Indicators; Outcome Map; Impact Metrics; Beneficiary Feedback; Success Stories
+6 Resource Manage; Budget Plan; Fund Use; Resource Allocate; Asset Manage; Team Deploy; Timeline Manage
+7 Knowledge Manage; Best Practices; Lesson Learn; Case Document; Knowledge Share; Capacity Build; Innovation Track
+8 Sustain Practices; Community Own; Local Capacity; Environment Care; Financial Sustain; Social Impact; Long-term Plan
+9 Risk Manage; Risk Assess; Mitigate Strategy; Contingency Plan; Crisis Manage; Quality Assure; Compliance Monitor
